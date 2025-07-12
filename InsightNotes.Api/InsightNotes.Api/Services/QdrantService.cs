@@ -1,4 +1,6 @@
-﻿using Qdrant.Client.Grpc;
+﻿using Qdrant.Client;
+using Qdrant.Client.Grpc;
+using System.Net.Http;
 
 namespace InsightNotes.Api.Services
 {
@@ -7,9 +9,10 @@ namespace InsightNotes.Api.Services
 
         private readonly QdrantGrpcClient client;
 
-        public QdrantService(QdrantGrpcClient client)
+        public QdrantService()
         {
-            this.client = client;
+            // connects to http://localhost:6334 (gRPC) by default
+            client = new QdrantGrpcClient("localhost");
         }
 
 
