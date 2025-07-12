@@ -1,6 +1,6 @@
 @InsightNotes.Api_HostAddress = http://localhost:5195
 
-GET {{InsightNotes.Api_HostAddress}}/weatherforecast/
+GET {{InsightNotes.Api_HostAddress}}/graphql/
 Accept: application/json
 
 ###
