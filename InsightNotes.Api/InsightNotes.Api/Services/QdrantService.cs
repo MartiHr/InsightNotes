@@ -91,6 +91,38 @@ namespace InsightNotes.Api.Services
             }
         }
 
+        public async Task<IReadOnlyList<ScoredPoint>> GetAllPointsAsync()
+        {
+            var allPoints = new List<ScoredPoint>();
+            PointId? nextPageOffset = null; // Updated type to match the expected 'PointId?'
+            const uint pageSize = 100;
+
+            do
+            {
+                var pointsResponse = await client.ScrollAsync(
+                    CollectionName,
+                    limit: pageSize,
+                    offset: nextPageOffset // Updated to use 'PointId?' type
+                );
+
+                if (pointsResponse.Result.Count == 0) // Updated to use 'Result' property of 'ScrollResponse'
+                    break;
+
+                allPoints.AddRange(pointsResponse.Result.Select(p => new ScoredPoint
+                {
+                    Id = p.Id,
+                    Payload = { p.Payload }, // Fixed: Use the `Add` method to populate the read-only `Payload` property
+                    Vectors = p.Vectors
+                }));
+
+                nextPageOffset = pointsResponse.NextPageOffset; // Ensure 'NextPageOffset' is compatible with 'PointId?'
+            }
+            while (nextPageOffset != null);
+
+            return allPoints.AsReadOnly();
+        }
+
+
         public async Task<IReadOnlyList<ScoredPoint>> SearchAsync(float[] queryVector, int limit = 5)
         {
             if (queryVector == null || queryVector.Length == 0)

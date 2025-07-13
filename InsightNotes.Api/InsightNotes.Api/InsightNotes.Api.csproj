@@ -10,7 +10,6 @@
     <PackageReference Include="HotChocolate.AspNetCore" Version="15.1.7" />
     <PackageReference Include="HotChocolate.Data" Version="15.1.7" />
     <PackageReference Include="OpenAI" Version="2.2.0" />
-    <PackageReference Include="OpenAI.Net" Version="1.0.4" />
     <PackageReference Include="Qdrant.Client" Version="1.14.1" />
   </ItemGroup>
 

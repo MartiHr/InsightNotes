@@ -1,11 +1,12 @@
 ﻿using InsightNotes.Api.Models;
-using InsightNotes.Api.Services;
+
 
 namespace InsightNotes.Api.GraphQL
 {
     public class Mutation
     {
-        public Note AddNote(string title, string content, [Service] NoteService noteService) =>
-            noteService.AddNote(title, content);
+        public async Task<Note> AddNoteAsync(string title, string content, [Service] NoteService noteService) =>
+            await noteService.AddNoteAsync(title, content);
     }
 }
+

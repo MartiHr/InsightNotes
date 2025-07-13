@@ -2,6 +2,8 @@
 {
     public class Note
     {
+        public Note() { }
+
         public Note(string title, string content)
         {
             Title = title;
