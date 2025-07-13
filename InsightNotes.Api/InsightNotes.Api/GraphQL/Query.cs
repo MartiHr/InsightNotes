@@ -1,11 +1,16 @@
 ﻿using InsightNotes.Api.Models;
-using InsightNotes.Api.Services;
 
-namespace InsightNotes.Api.GraphQL
+public class Query
 {
-    public class Query
+    private readonly NoteService noteService;
+
+    public Query(NoteService noteService)
     {
-        public IEnumerable<Note> GetNotes([Service] NoteService noteService) =>
-            noteService.GetNotes();
+        this.noteService = noteService;
+    }
+
+    public async Task<IEnumerable<Note>> GetNotesAsync()
+    {
+        return await noteService.GetNotesAsync();
     }
 }
