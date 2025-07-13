@@ -7,6 +7,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 //builder.Services.AddControllers();
 builder.Services.AddSingleton<NoteService>();
+builder.Services.AddSingleton<QdrantService>();
+
 
 builder.Services
     .AddGraphQLServer()

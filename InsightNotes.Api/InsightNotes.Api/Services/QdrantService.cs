@@ -1,20 +1,229 @@
 ﻿using Qdrant.Client;
 using Qdrant.Client.Grpc;
-using System.Net.Http;
+using static Qdrant.Client.Grpc.Conditions;
 
 namespace InsightNotes.Api.Services
 {
-    public class QdrantService
+    public class QdrantService : IDisposable
     {
-
-        private readonly QdrantGrpcClient client;
+        private readonly QdrantClient client;
+        private const string CollectionName = "notes";
+        private bool disposed = false;
 
         public QdrantService()
         {
-            // connects to http://localhost:6334 (gRPC) by default
-            client = new QdrantGrpcClient("localhost");
+            client = new QdrantClient("http://localhost:6333");
         }
 
+        public async Task CreateCollectionIfNotExistsAsync()
+        {
+            try
+            {
+                // Check if collection already exists
+                if (await CollectionExistsAsync())
+                {
+                    return;
+                }
 
+                var vectorParams = new VectorParams
+                {
+                    Size = 1536,
+                    Distance = Distance.Cosine
+                };
+
+                await client.CreateCollectionAsync(CollectionName, vectorParams);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to create collection: {ex.Message}", ex);
+            }
+        }
+
+        public async Task RecreateCollectionAsync()
+        {
+            try
+            {
+                // Delete collection if it exists
+                if (await CollectionExistsAsync())
+                {
+                    await client.DeleteCollectionAsync(CollectionName);
+                }
+
+                var vectorParams = new VectorParams
+                {
+                    Size = 1536,
+                    Distance = Distance.Cosine
+                };
+
+                await client.CreateCollectionAsync(CollectionName, vectorParams);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to recreate collection: {ex.Message}", ex);
+            }
+        }
+
+        public async Task StoreNoteVectorAsync(Guid noteId, float[] vector, string title, string content)
+        {
+            if (vector == null || vector.Length == 0)
+                throw new ArgumentException("Vector cannot be null or empty", nameof(vector));
+
+            try
+            {
+                var point = new PointStruct
+                {
+                    Id = new PointId { Uuid = noteId.ToString() },
+                    Vectors = vector,
+                    Payload =
+                    {
+                        ["title"] = title ?? string.Empty,
+                        ["content"] = content ?? string.Empty,
+                        ["createdAt"] = DateTime.UtcNow.ToString("o"),
+                        ["noteId"] = noteId.ToString()
+                    }
+                };
+
+                await client.UpsertAsync(CollectionName, new[] { point });
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to store note vector: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<IReadOnlyList<ScoredPoint>> SearchAsync(float[] queryVector, int limit = 5)
+        {
+            if (queryVector == null || queryVector.Length == 0)
+                throw new ArgumentException("Query vector cannot be null or empty", nameof(queryVector));
+
+            if (limit <= 0)
+                throw new ArgumentException("Limit must be greater than 0", nameof(limit));
+
+            try
+            {
+                var results = await client.SearchAsync(
+                    CollectionName,
+                    queryVector,
+                    limit: (ulong)limit
+                );
+
+                return results.ToList().AsReadOnly();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to search vectors: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<IReadOnlyList<ScoredPoint>> SearchWithFilterAsync(
+             float[] queryVector,
+             string filterField,
+             string filterValue,
+             int limit = 5)
+        {
+            if (queryVector == null || queryVector.Length == 0)
+                throw new ArgumentException("Query vector cannot be null or empty", nameof(queryVector));
+
+            if (string.IsNullOrWhiteSpace(filterField))
+                throw new ArgumentException("Filter field cannot be null or empty", nameof(filterField));
+
+            if (string.IsNullOrWhiteSpace(filterValue))
+                throw new ArgumentException("Filter value cannot be null or empty", nameof(filterValue));
+
+            if (limit <= 0)
+                throw new ArgumentException("Limit must be greater than 0", nameof(limit));
+
+            try
+            {
+                var filter = new Filter
+                {
+                    Must = {
+                        new Condition
+                        {
+                            Field = new FieldCondition
+                            {
+                                Key = filterField,
+                                Match = new Match
+                                {
+                                    Text = filterValue
+                                }
+                            }
+                        }
+                    }
+                };
+
+                var results = await client.SearchAsync(
+                    CollectionName,
+                    queryVector,
+                    filter: filter,
+                    limit: (ulong)limit
+                );
+
+                return results.ToList().AsReadOnly();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to search vectors with filter: {ex.Message}", ex);
+            }
+        }
+
+        public async Task DeleteNoteAsync(Guid noteId)
+        {
+            if (noteId == Guid.Empty)
+                throw new ArgumentException("Note ID cannot be empty", nameof(noteId));
+
+            try
+            {
+                var pointId = new PointId { Uuid = noteId.ToString() };
+                await client.DeleteAsync(CollectionName, new[] { pointId });
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to delete note: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<bool> CollectionExistsAsync()
+        {
+            try
+            {
+                await client.GetCollectionInfoAsync(CollectionName);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<ulong> GetPointCountAsync()
+        {
+            try
+            {
+                return await client.CountAsync(CollectionName);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to get point count: {ex.Message}", ex);
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposed)
+            {
+                if (disposing)
+                {
+                    client?.Dispose();
+                }
+                disposed = true;
+            }
+        }
     }
 }
