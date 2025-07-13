@@ -1,20 +1,30 @@
 ﻿using InsightNotes.Api.Models;
-using System.Reflection.Metadata.Ecma335;
+using InsightNotes.Api.Services;
 
-namespace InsightNotes.Api.Services
+public class NoteService
 {
-    public class NoteService
+    private readonly List<Note> notes = new List<Note>();
+    private readonly QdrantService qdrantService;
+    private readonly IEmbeddingService embeddingService;
+
+    public NoteService(QdrantService qdrantService, IEmbeddingService embeddingService)
     {
-        private readonly List<Note> notes = new List<Note>();
+        this.qdrantService = qdrantService;
+        this.embeddingService = embeddingService;
+    }
 
-        public IEnumerable<Note> GetNotes() => notes;
+    public IEnumerable<Note> GetNotes() => notes;
 
-        public Note AddNote(string title, string content)
-        {
-            Note note = new Note(title, content);
-            notes.Add(note);
+    public async Task<Note> AddNoteAsync(string title, string content)
+    {
+        Note note = new Note(title, content);
+        notes.Add(note);
 
-            return note;
-        }
+        // Generate embedding for the note (using title + content)
+        var embedding = await embeddingService.GenerateEmbeddingAsync($"{title}\n{content}");
+
+        await qdrantService.StoreNoteVectorAsync(note.Id, embedding, title, content);
+
+        return note;
     }
 }
