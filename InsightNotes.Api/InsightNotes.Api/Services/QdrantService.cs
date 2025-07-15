@@ -27,7 +27,7 @@ namespace InsightNotes.Api.Services
 
                 var vectorParams = new VectorParams
                 {
-                    Size = 1536,
+                    Size = 384,
                     Distance = Distance.Cosine
                 };
 
@@ -51,7 +51,7 @@ namespace InsightNotes.Api.Services
 
                 var vectorParams = new VectorParams
                 {
-                    Size = 1536,
+                    Size = 384,
                     Distance = Distance.Cosine
                 };
 
