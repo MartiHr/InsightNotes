@@ -5,23 +5,16 @@ namespace InsightNotes.Api.GraphQL
 {
     public class Query
     {
-        private readonly NoteService noteService;
-
-        public Query(NoteService noteService)
-        {
-            this.noteService = noteService;
-        }
-
-        public async Task<IEnumerable<Note>> GetNotesAsync() =>
+        public async Task<IEnumerable<Note>> GetNotesAsync([Service] NoteService noteService) =>
             await noteService.GetNotesAsync();
 
-        public async Task<Note?> GetNoteByIdAsync(Guid noteId) =>
+        public async Task<Note?> GetNoteByIdAsync(Guid noteId, [Service] NoteService noteService) =>
             await noteService.GetNoteByIdAsync(noteId);
 
-        public async Task<IEnumerable<Note>> GetNotesByIdsAsync(IEnumerable<Guid> noteIds) =>
+        public async Task<IEnumerable<Note>> GetNotesByIdsAsync(IEnumerable<Guid> noteIds, [Service] NoteService noteService) =>
             await noteService.GetNotesByIdsAsync(noteIds);
 
-        public async Task<IEnumerable<Note>> SearchNotesAsync(string query, int limit = 5) =>
+        public async Task<IEnumerable<Note>> SearchNotesAsync(string query, int limit, [Service] NoteService noteService) =>
             await noteService.SearchNotesAsync(query, limit);
     }
 }

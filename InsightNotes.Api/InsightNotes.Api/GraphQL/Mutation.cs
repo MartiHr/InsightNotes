@@ -5,23 +5,16 @@ namespace InsightNotes.Api.GraphQL
 {
     public class Mutation
     {
-        private readonly NoteService noteService;
-
-        public Mutation(NoteService noteService)
-        {
-            this.noteService = noteService;
-        }
-
-        public async Task<Note> AddNoteAsync(string title, string content) =>
+        public async Task<Note> AddNoteAsync(string title, string content, [Service] NoteService noteService) =>
             await noteService.AddNoteAsync(title, content);
 
-        public async Task<Note> UpdateNoteAsync(Guid noteId, string newTitle, string newContent) =>
+        public async Task<Note> UpdateNoteAsync(Guid noteId, string newTitle, string newContent, [Service] NoteService noteService) =>
             await noteService.UpdateNoteAsync(noteId, newTitle, newContent);
 
-        public async Task<bool> DeleteNoteAsync(Guid noteId)
+        public async Task<bool> DeleteNoteAsync(Guid noteId, [Service] NoteService noteService)
         {
             await noteService.DeleteNoteAsync(noteId);
-            return true; // or some status if you want to handle failure
+            return true;
         }
     }
 }

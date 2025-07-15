@@ -33,7 +33,7 @@ using (var scope = app.Services.CreateScope())
 {
     var qdrantService = scope.ServiceProvider.GetRequiredService<QdrantService>();
     await qdrantService.CreateCollectionIfNotExistsAsync();
-}
+    }
 
 app.UseHttpsRedirection();
 app.MapGraphQL();
