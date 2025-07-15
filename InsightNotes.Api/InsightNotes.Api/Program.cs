@@ -10,7 +10,7 @@ builder.Services.AddHttpClient<IEmbeddingService, HuggingFaceEmbeddingService>(c
     client.BaseAddress = new Uri("https://router.huggingface.co/hf-inference/");
     client.Timeout = TimeSpan.FromSeconds(90);
     client.DefaultRequestHeaders.Authorization =
-        new AuthenticationHeaderValue("Bearer", "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");
+        new AuthenticationHeaderValue("Bearer", "YourTokenHere");
     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 });
 
