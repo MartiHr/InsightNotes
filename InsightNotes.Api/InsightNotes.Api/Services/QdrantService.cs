@@ -12,7 +12,7 @@ namespace InsightNotes.Api.Services
 
         public QdrantService()
         {
-            client = new QdrantClient("http://localhost:6333");
+            client = new QdrantClient("localhost");
         }
 
         public async Task CreateCollectionIfNotExistsAsync()

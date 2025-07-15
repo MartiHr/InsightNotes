@@ -10,10 +10,15 @@ builder.Services.AddSingleton<IEmbeddingService, OpenAIEmbeddingService>();
 builder.Services.AddSingleton<QdrantService>();
 builder.Services.AddSingleton<NoteService>();
 
+builder.Services.AddScoped<InsightNotes.Api.GraphQL.Query>();
+builder.Services.AddScoped<InsightNotes.Api.GraphQL.Mutation>();
+
 builder.Services
     .AddGraphQLServer()
-    .AddQueryType<Query>()
-    .AddMutationType<Mutation>();
+    .AddQueryType<InsightNotes.Api.GraphQL.Query>()
+    .AddMutationType<InsightNotes.Api.GraphQL.Mutation>()
+    .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = true);
+
 
 var app = builder.Build();
 
