@@ -1,22 +1,25 @@
 using InsightNotes.Api.GraphQL;
 using InsightNotes.Api.Services;
-using OpenAI;
+using System.Net.Http.Headers;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Configure HttpClient for HuggingFaceEmbeddingService
+builder.Services.AddHttpClient<IEmbeddingService, HuggingFaceEmbeddingService>(client =>
+{
+    client.BaseAddress = new Uri("https://router.huggingface.co/hf-inference/");
+    client.Timeout = TimeSpan.FromSeconds(90);
+    client.DefaultRequestHeaders.Authorization =
+        new AuthenticationHeaderValue("Bearer", "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");
+    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+});
 
-// Could be used instead of HuggingFaceEmbeddingService if OpenAI is preferred
-//builder.Services.AddSingleton(new OpenAIClient(builder.Configuration["OpenAI:ApiKey"]));
-//builder.Services.AddSingleton<IEmbeddingService, OpenAIEmbeddingService>();
-
-builder.Services.AddHttpClient<IEmbeddingService, HuggingFaceEmbeddingService>();
 
 builder.Services.AddSingleton<QdrantService>();
 builder.Services.AddSingleton<NoteService>();
-
 builder.Services.AddScoped<Query>();
 builder.Services.AddScoped<Mutation>();
+builder.Services.AddLogging();
 
 builder.Services
     .AddGraphQLServer()
@@ -24,16 +27,14 @@ builder.Services
     .AddMutationType<Mutation>()
     .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = true);
 
-
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+using (var scope = app.Services.CreateScope())
+{
+    var qdrantService = scope.ServiceProvider.GetRequiredService<QdrantService>();
+    await qdrantService.CreateCollectionIfNotExistsAsync();
+}
 
 app.UseHttpsRedirection();
-
-//app.UseAuthorization();
-
-//app.MapControllers();
 app.MapGraphQL();
-
 app.Run();
